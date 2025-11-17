@@ -6,25 +6,7 @@ import cn_clip.clip as clip
 from cn_clip.clip import load_from_name, available_models
 import numpy as np
 import os
-
-def generate_text_features(user_text, model, tokenizer, device):
-    # 使用模型生成文本特征向量
-
-    with torch.no_grad():
-        text_features = model.encode_text(user_text)
-    text_features /= text_features.norm(dim=-1, keepdim=True)  # 归一化特征向量
-    return text_features.cpu().numpy()
-
-def generate_pic_features(image, model, preprocess, device):
-    
-    image = preprocess(image).unsqueeze(0).to(device)
-    with torch.no_grad():
-        features = model.encode_image(image)
-        features /= features.norm(dim=-1, keepdim=True)  # 归一化特征向量
-
-    # 将特征向量转换为CPU张量并返回
-    return features.cpu().numpy()
-    
+from core.clip_feature import ClipFeatureEx
 
 def calculate_similarity(text_features, image_features):
     # 计算余弦相似度
@@ -41,18 +23,7 @@ def main(db_path):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
-    # 设置设备
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    # 加载模型和tokenizer
-    model, preprocess = load_from_name("ViT-H-14", device=device, download_root='./')
-    tokenizer = clip.tokenize
-    model.eval()
-
-    
-
-    
-
+    clipex = ClipFeatureEx(model_name="ViT-H-14", device=None, download_root='./')
     # 查询数据库中的所有图片特征向量
     cursor.execute("SELECT id, features FROM images")
     rows = cursor.fetchall()
@@ -88,7 +59,7 @@ def main(db_path):
                 if ext in valid_extensions:
                     try:
                         # 读取图片并更新image变量
-                        image = Image.open(file_path)
+                        image = Image.open(file_path).convert("RGB")
                         print("图片已成功加载到image变量中。")
                     except Exception as e:
                         print(f"错误：无法打开图片文件，原因：{e}")
@@ -101,7 +72,7 @@ def main(db_path):
         if isinstance(image, Image.Image):
             print("剪贴板的内容是图")
             # 生成剪贴板图片特征向量
-            pic_features = generate_pic_features(image, model, preprocess, device)
+            pic_features = clipex.generate_image_features(image)
             print("图片特征向量：", pic_features)
             
             # 计算相似度并找出相似度最高的5个结果

@@ -5,16 +5,9 @@ import cn_clip.clip as clip
 from cn_clip.clip import load_from_name, available_models
 import numpy as np
 import os
+from core.clip_feature import ClipFeatureEx
 
-def generate_text_features(user_text, model, tokenizer, device):
-    # 使用模型生成文本特征向量
 
-    with torch.no_grad():
-        text_features = model.encode_text(user_text)
-    text_features /= text_features.norm(dim=-1, keepdim=True)  # 归一化特征向量
-    text_features_np = text_features.cpu().numpy()
-    print("文本特征向量的维度：", text_features_np.shape)
-    return text_features_np
 
 def calculate_similarity(text_features, image_features):
     # 计算余弦相似度
@@ -29,14 +22,7 @@ def main(db_path):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
-    # 设置设备
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    # 加载模型和tokenizer
-    model, preprocess = load_from_name("ViT-H-14", device=device, download_root='./')
-    tokenizer = clip.tokenize
-    model.eval()
-
+    clipex = ClipFeatureEx(model_name="ViT-H-14", device=None, download_root='./')
     
 
     
@@ -63,10 +49,9 @@ def main(db_path):
 
     while True:
         # 获取用户输入的文本
-        user_text_na = input("请输入文本：")
-        user_text = clip.tokenize([user_text_na]).to(device)
+        user_text = input("请输入文本：")
         # 生成用户文本的特征向量
-        text_features = generate_text_features(user_text, model, tokenizer, device)
+        text_features = clipex.generate_text_features(user_text)
         print("文本特征向量：", text_features)
         
         # 计算相似度并找出相似度最高的5个结果

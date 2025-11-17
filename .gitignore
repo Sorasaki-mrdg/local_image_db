@@ -1,3 +1,5 @@
 clip_cn_vit-h-14.pt
 # 忽略数据库文件
 *.db
+
+__pycache__

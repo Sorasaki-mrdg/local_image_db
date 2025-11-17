@@ -1,27 +1,8 @@
 import sqlite3
-import torch
-from PIL import Image
-import cn_clip.clip as clip
-from cn_clip.clip import load_from_name, available_models
 import os
+from PIL import Image
 
-def generate_features(image_path, model, preprocess, device):
-    # 读取图片并进行预处理
-    image = Image.open(image_path).convert("RGB")
-    image = preprocess(image).unsqueeze(0).to(device)
-
-    # 使用模型生成特征向量
-    with torch.no_grad():
-        features = model.encode_image(image)
-        features /= features.norm(dim=-1, keepdim=True)  # 归一化特征向量
-
-    features_np = features.cpu().numpy()
-    # 将特征向量转换为CPU张量并返回
-    print("图片特征向量的维度：", features_np.shape)
-    if features_np.shape != (1, 1024):
-        raise ValueError(f"图片特征向量的维度应为 (1, 1024)，但实际维度为 {features_np.shape}")
-        input("维度错误！")
-    return features_np
+from core.clip_feature import ClipFeatureEx
 
 def is_supported_image(file_path):
     # 检查文件扩展名是否为支持的格式
@@ -33,16 +14,8 @@ def main(db_path):
     # 连接数据库
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
+    clipex = ClipFeatureEx(model_name="ViT-H-14", device=None, download_root='./')
 
-    # 打印可用模型
-    print("Available models:", available_models())
-
-    # 设置设备
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
-    # 加载模型
-    model, preprocess = load_from_name("ViT-H-14", device=device, download_root='./')
-    model.eval()
 
     # 查询数据库中的所有图片路径
     cursor.execute("SELECT id, path, features FROM images")
@@ -53,8 +26,10 @@ def main(db_path):
         if is_supported_image(image_path):
             if existing_features is None:  # 检查features是否为空
                 try:
+                    # 预处理
+                    image = Image.open(image_path).convert("RGB")
                     # 生成特征向量
-                    features = generate_features(image_path, model, preprocess, device)
+                    features = clipex.generate_image_features(image)
 
                     # 将特征向量存储到数据库
                     cursor.execute("UPDATE images SET features = ? WHERE id = ?", (features.tobytes(), image_id))
