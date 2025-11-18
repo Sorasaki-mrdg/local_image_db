@@ -1,12 +1,10 @@
 import sqlite3
-import torch
 from PIL import Image
 from PIL import ImageGrab
-import cn_clip.clip as clip
-from cn_clip.clip import load_from_name, available_models
 import numpy as np
 import os
 from core.clip_feature import ClipFeatureEx
+import core.db_config as db_config
 
 def calculate_similarity(text_features, image_features):
     # 计算余弦相似度
@@ -101,5 +99,7 @@ def main(db_path):
     conn.close()
 
 if __name__ == "__main__":
-    db_path = "images.db"  # 数据库文件路径
+    # db_path = "images.db"  # 数据库文件路径
+    config = db_config.load_config()
+    db_path = config["database_path"]
     main(db_path)

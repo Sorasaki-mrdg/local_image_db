@@ -3,6 +3,7 @@ import os
 from PIL import Image
 
 from core.clip_feature import ClipFeatureEx
+import core.db_config as db_config
 
 def is_supported_image(file_path):
     # 检查文件扩展名是否为支持的格式
@@ -46,5 +47,7 @@ def main(db_path):
     conn.close()
 
 if __name__ == "__main__":
-    db_path = "images.db"  # 数据库文件路径
+    # db_path = "images.db"  # 数据库文件路径
+    config = db_config.load_config()
+    db_path = config["database_path"]
     main(db_path)

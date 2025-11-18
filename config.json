@@ -1,0 +1,7 @@
+{
+    "image_directories": [
+        "F:\\picture"
+    ],
+    "database_path": "images.db",
+    "valid_extensions": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff", ".jfif"]
+}

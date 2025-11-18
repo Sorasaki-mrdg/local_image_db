@@ -1,11 +1,8 @@
 import sqlite3
-import torch
-from PIL import Image
-import cn_clip.clip as clip
-from cn_clip.clip import load_from_name, available_models
 import numpy as np
 import os
 from core.clip_feature import ClipFeatureEx
+import core.db_config as db_config
 
 
 
@@ -23,9 +20,6 @@ def main(db_path):
     cursor = conn.cursor()
 
     clipex = ClipFeatureEx(model_name="ViT-H-14", device=None, download_root='./')
-    
-
-    
 
     # 查询数据库中的所有图片特征向量
     cursor.execute("SELECT id, features FROM images")
@@ -78,5 +72,7 @@ def main(db_path):
     conn.close()
 
 if __name__ == "__main__":
-    db_path = "images.db"  # 数据库文件路径
+    config = db_config.load_config()
+    db_path = config["database_path"]
+    # db_path = "images.db"  # 数据库文件路径
     main(db_path)
