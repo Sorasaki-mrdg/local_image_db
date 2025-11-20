@@ -4,33 +4,30 @@ from PIL import ImageGrab
 import numpy as np
 import os
 from core.clip_feature import ClipFeatureEx
+import core.clip_feature as clip_feature
 import core.db_config as db_config
 import core.search_count as search_count
-
-def calculate_similarity(text_features, image_features):
-    # 计算余弦相似度
-    dot_product = np.dot(text_features.flatten(), image_features.flatten())
-    norm_text = np.linalg.norm(text_features.flatten())
-    norm_image = np.linalg.norm(image_features.flatten())
-    similarity = dot_product / (norm_text * norm_image)
-    return similarity
+from core.database import DatabaseManager
 
 
 
-def main(db_path):
-    # 连接数据库
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
+
+
+def main(db_path, how_many_results=5):
+    # 连接到SQLite数据库
+    image_db = DatabaseManager(db_path)
+    image_db.connect()
+    image_db.create_tables()
 
     clipex = ClipFeatureEx(model_name="ViT-H-14", device=None, download_root='./')
     # 查询数据库中的所有图片特征向量
-    cursor.execute("SELECT id, features FROM images")
-    rows = cursor.fetchall()
+    rows = image_db.execute_query("SELECT id, features FROM images")
     
 
     # 存储所有图片的特征向量
     all_image_features = []
     image_ids = []
+
     for row in rows:
         #print(row)
         image_id, features = row
@@ -74,22 +71,23 @@ def main(db_path):
             print("图片特征向量：", pic_features)
             
             # 计算相似度并找出相似度最高的5个结果
-            similarities = [calculate_similarity(pic_features, image_features) for image_features in all_image_features]
-            top_5_indices = np.argsort(similarities)[-5:][::-1]  # 降序排序
+            similarities = [clip_feature.calculate_similarity(pic_features, image_features) for image_features in all_image_features]
+            top_indices = np.argsort(similarities)[-how_many_results:][::-1]  # 降序排序
 
             print("相似度最高的5个图片ID和路径：")
-            for idx in top_5_indices:
+            for idx in top_indices:
                 image_id = image_ids[idx]  # 使用正确的ID
                 similarity = similarities[idx]
-                cursor.execute("SELECT path FROM images WHERE id = ?", (image_id,))
-                result = cursor.fetchone()
-                if result is not None:
-                    path = result[0]
+                path_result = image_db.execute_query("SELECT path FROM images WHERE id = ?", (image_id,))
+                if path_result:
+                    path = path_result[0][0]  # 获取路径
                     if os.path.exists(path):
                         print(f"图片ID: {image_id}, 路径: {path}, 相似度: {similarity:.2f}")
                         os.startfile(path)
                     else:
                         print(f"图片ID: {image_id}, 文件不存在: {path}, 相似度: {similarity:.2f}")
+                else:
+                    print(f"  图片ID: {image_id}, 未找到路径, 相似度: {similarity:.3f}")
             search_count.update_search_count('image')
             input("按任意键继续")
         else:
@@ -97,7 +95,7 @@ def main(db_path):
             input("按任意键继续")
         
     # 关闭数据库连接
-    conn.close()
+    image_db.close()
 
 if __name__ == "__main__":
     # db_path = "images.db"  # 数据库文件路径

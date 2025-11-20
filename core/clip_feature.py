@@ -2,6 +2,7 @@ import torch
 from PIL import Image
 import cn_clip.clip as clip
 from cn_clip.clip import load_from_name, available_models
+import numpy as np
 
 class ClipFeatureEx:
     def __init__(self, model_name="ViT-H-14", device=None, download_root='./'):
@@ -40,3 +41,11 @@ class ClipFeatureEx:
         if text_features_np.shape != (1, 1024):
             raise ValueError(f"文本特征向量的维度应为 (1, 1024)，但实际维度为 {text_features_np.shape}")
         return text_features_np
+    
+def calculate_similarity(text_features, image_features):
+    # 计算余弦相似度
+    dot_product = np.dot(text_features.flatten(), image_features.flatten())
+    norm_text = np.linalg.norm(text_features.flatten())
+    norm_image = np.linalg.norm(image_features.flatten())
+    similarity = dot_product / (norm_text * norm_image)
+    return similarity
