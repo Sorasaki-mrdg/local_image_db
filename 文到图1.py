@@ -3,6 +3,7 @@ import numpy as np
 import os
 from core.clip_feature import ClipFeatureEx
 import core.db_config as db_config
+import core.search_count as search_count
 
 
 
@@ -67,7 +68,7 @@ def main(db_path):
                     os.startfile(path)
                 else:
                     print(f"图片ID: {image_id}, 文件不存在: {path}, 相似度: {similarity:.2f}")
-        
+        search_count.update_search_count('text')
     # 关闭数据库连接
     conn.close()
 

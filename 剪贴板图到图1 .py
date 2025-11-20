@@ -5,6 +5,7 @@ import numpy as np
 import os
 from core.clip_feature import ClipFeatureEx
 import core.db_config as db_config
+import core.search_count as search_count
 
 def calculate_similarity(text_features, image_features):
     # 计算余弦相似度
@@ -43,7 +44,6 @@ def main(db_path):
             image_ids.append(image_id)
     #input("按")
     while True:
-
         image = ImageGrab.grabclipboard()
         if isinstance(image, list):
             # 提取列表中的第一个元素（假设是文件路径）
@@ -90,6 +90,7 @@ def main(db_path):
                         os.startfile(path)
                     else:
                         print(f"图片ID: {image_id}, 文件不存在: {path}, 相似度: {similarity:.2f}")
+            search_count.update_search_count('image')
             input("按任意键继续")
         else:
             print("剪贴板不是图片")

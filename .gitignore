@@ -3,3 +3,6 @@ clip_cn_vit-h-14.pt
 *.db
 
 __pycache__
+
+config.json
+search_count.json
