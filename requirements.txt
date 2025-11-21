@@ -1,0 +1,6 @@
+sqlite3
+cn_clip
+numpy
+pillow
+torch
+torchvision
