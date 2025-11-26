@@ -1,6 +1,6 @@
-sqlite3
 cn_clip
 numpy
 pillow
-torch
-torchvision
+#torch
+#torchvision
+#torch请自行安装
