@@ -6,9 +6,14 @@ import core.clip_feature as clip_feature
 import core.db_config as db_config
 import core.search_count as search_count
 from core.database import DatabaseManager
-
+import argparse
 
 def main(db_path, how_many_results=5):
+    parser = argparse.ArgumentParser(description='')
+    parser.add_argument('--max', type=int, default=5, help='返回的最大结果数量 (默认: 5)')
+    args = parser.parse_args()
+    how_many_results = args.max
+    print(f"设置返回的最大结果数量为: {how_many_results}")
     # 连接到SQLite数据库
     image_db = DatabaseManager(db_path)
     image_db.connect()
